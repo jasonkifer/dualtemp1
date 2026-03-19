@@ -341,14 +341,19 @@
 
   // --- Fetch ---
   async function getWeather(lat, lon, locationName) {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&hourly=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&hourly=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=2`;
     const res = await fetch(url);
     const d = await res.json();
     const name = locationName || (d.timezone ? d.timezone.split('/').pop().replace(/_/g, ' ') : 'Location');
 
     // Find current hour index
-    const nowISO = new Date().toISOString().slice(0, 13);
-    let startIdx = d.hourly.time.findIndex(t => t.startsWith(nowISO));
+    // Build local time string to match API's local times (e.g. "2026-03-19T09")
+    const now = new Date();
+    const localISO = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0') + 'T' +
+      String(now.getHours()).padStart(2, '0');
+    let startIdx = d.hourly.time.findIndex(t => t.startsWith(localISO));
     if (startIdx === -1) startIdx = 0;
 
     // Get next 6 hours of forecast
